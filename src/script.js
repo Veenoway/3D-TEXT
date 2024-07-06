@@ -166,6 +166,16 @@ scene.add(camera);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 
+const cursor = {
+  x: 0,
+  y: 0,
+};
+
+window.addEventListener("mousemove", (e) => {
+  cursor.x = e.clientX / sizes.width - 0.5;
+  cursor.y = -(e.clientY / sizes.height - 0.5);
+});
+
 /**
  * Renderer
  */
@@ -182,6 +192,10 @@ const clock = new THREE.Clock();
 
 const tick = () => {
   const elapsedTime = clock.getElapsedTime();
+
+  camera.position.x = Math.sin(cursor.x * (Math.PI - 1)) * 2;
+  camera.position.z = Math.cos(cursor.x * (Math.PI - 1)) * 2;
+  camera.position.y = cursor.y * 3;
 
   // Update controls
   controls.update();
