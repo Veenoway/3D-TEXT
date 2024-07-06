@@ -109,26 +109,33 @@ fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font) => {
 
   //   const axesHelper = new THREE.AxesHelper();
   //   scene.add(axesHelper);
-
-  const donutGeometry = new THREE.OctahedronGeometry(1, 0);
-  const donutMaterial = new THREE.MeshToonMaterial();
-  donutMaterial.map = toonTexture;
-
-  for (let i = 0; i < 300; i++) {
-    const donut = new THREE.Mesh(donutGeometry, donutMaterial);
-
-    donut.position.x = (Math.random() - 0.5) * 12;
-    donut.position.y = (Math.random() - 0.5) * 12;
-    donut.position.z = (Math.random() - 0.5) * 12;
-    donut.rotation.x = Math.random() * Math.PI;
-    donut.rotation.y = Math.random() * Math.PI;
-
-    const random = Math.random();
-    donut.scale.set(random, random, random);
-
-    scene.add(donut);
-  }
 });
+
+const donuts = [];
+const donutGeometry = new THREE.OctahedronGeometry(1, 1);
+const donutMaterial = new THREE.MeshPhysicalMaterial();
+donutMaterial.metalness = 0.1;
+donutMaterial.roughness = 0;
+donutMaterial.iridescence = 1;
+donutMaterial.iridescenceIOR = 1;
+donutMaterial.transmission = 1;
+donutMaterial.ior = 1.15;
+donutMaterial.map = toonTexture;
+
+for (let i = 0; i < 1000; i++) {
+  const donut = new THREE.Mesh(donutGeometry, donutMaterial);
+  donut.position.x = (Math.random() - 0.5) * 10;
+  donut.position.y = (Math.random() - 0.5) * 10;
+  donut.position.z = (Math.random() - 0.5) * 10;
+  donut.rotation.x = Math.random() * Math.PI;
+  donut.rotation.y = Math.random() * Math.PI;
+  donut.initialPosition = donut.position.y;
+  const random = 0.2;
+  donut.scale.set(random, random, random);
+
+  scene.add(donut);
+  donuts.push(donut);
+}
 
 const textGeometryFolder = gui.addFolder("TextGeometry");
 textGeometryFolder.add(params, "text").onChange(updateTextGeometry);
@@ -170,9 +177,9 @@ function updateTextGeometry() {
   });
   textMesh = new THREE.Mesh(newTextGeometry, new THREE.MeshMatcapMaterial());
   newTextGeometry.center();
-  newTextGeometry.deleteAttribute("normal");
-  newTextGeometry = mergeVertices(newTextGeometry, 1e-3);
-  newTextGeometry.computeVertexNormals();
+  //   newTextGeometry.deleteAttribute("normal");
+  //   newTextGeometry = mergeVertices(newTextGeometry, 1e-3);
+  //   newTextGeometry.computeVertexNormals();
   textMesh.matcap = matcapTexture;
   camera.lookAt(textMesh.position);
   scene.add(textMesh);
@@ -264,6 +271,15 @@ const tick = () => {
   camera.position.x = Math.sin(cursor.x * (Math.PI - 1)) * 2;
   camera.position.z = Math.cos(cursor.x * (Math.PI - 1)) * 2;
   camera.position.y = cursor.y * 3;
+
+  donuts.forEach((donut) => {
+    donut.rotation.x += 0.0005;
+    donut.rotation.y += 0.0005;
+
+    donut.position.y =
+      donut.initialPosition +
+      Math.sin(elapsedTime + donut.initialPosition) * 0.07;
+  });
 
   // Update controls
   controls.update();
