@@ -4,6 +4,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
+import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 /**
  * Base
@@ -52,8 +53,24 @@ const matcapTexture = textureLoader.load("/textures/matcaps/3.png");
 matcapTexture.colorSpace = THREE.SRGBColorSpace;
 
 // FONTS
+
+const params = {
+  text: "veeno",
+  size: 0.5,
+  depth: 0.2,
+  curveSegments: 5,
+  bevelEnabled: true,
+  bevelOffset: 0,
+  bevelSegments: 4,
+  bevelThickness: 0.03,
+  bevelSize: 0.02,
+};
+
+let textMesh;
+let storedFont;
 const fontLoader = new FontLoader();
 fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font) => {
+  console.log(font, "IM FONT");
   const textGeometry = new TextGeometry("veeno", {
     font: font,
     size: 0.5,
@@ -65,6 +82,7 @@ fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font) => {
     bevelThickness: 0.03,
     bevelSize: 0.02,
   });
+
   //   textGeometry.computeBoundingBox();
   //   textGeometry.translate(
   //     -(textGeometry.boundingBox.max.x - 0.02) / 2,
@@ -74,9 +92,12 @@ fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font) => {
   textGeometry.center();
   const material = new THREE.MeshMatcapMaterial();
   material.matcap = matcapTexture;
-  const text = new THREE.Mesh(textGeometry, material);
-
-  scene.add(text);
+  //   textGeometry.deleteAttribute("normal");
+  //   textGeometry = mergeVertices(textGeometry, 1e-3);
+  //   textGeometry.computeVertexNormals();
+  textMesh = new THREE.Mesh(textGeometry, material);
+  storedFont = font;
+  scene.add(textMesh);
 
   // TEXTURE
   material.metalness = 0.3;
@@ -86,10 +107,9 @@ fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font) => {
   //   material.transmission = 1;
   //   material.ior = 1.15;
 
-  const axesHelper = new THREE.AxesHelper();
-  scene.add(axesHelper);
+  //   const axesHelper = new THREE.AxesHelper();
+  //   scene.add(axesHelper);
 
-  camera.lookAt(text.position);
   const donutGeometry = new THREE.OctahedronGeometry(1, 0);
   const donutMaterial = new THREE.MeshToonMaterial();
   donutMaterial.map = toonTexture;
@@ -109,6 +129,54 @@ fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font) => {
     scene.add(donut);
   }
 });
+
+const textGeometryFolder = gui.addFolder("TextGeometry");
+textGeometryFolder.add(params, "text").onChange(updateTextGeometry);
+textGeometryFolder.add(params, "size", 0.1, 10).onChange(updateTextGeometry);
+textGeometryFolder.add(params, "depth", 0.1, 10).onChange(updateTextGeometry);
+textGeometryFolder
+  .add(params, "curveSegments", 1, 20)
+  .onChange(updateTextGeometry);
+textGeometryFolder.add(params, "bevelEnabled").onChange(updateTextGeometry);
+textGeometryFolder
+  .add(params, "bevelThickness", 0.01, 1)
+  .onChange(updateTextGeometry);
+textGeometryFolder
+  .add(params, "bevelSize", 0.01, 1)
+  .onChange(updateTextGeometry);
+textGeometryFolder
+  .add(params, "bevelOffset", 0, 1)
+  .onChange(updateTextGeometry);
+textGeometryFolder
+  .add(params, "bevelSegments", 1, 20)
+  .onChange(updateTextGeometry);
+
+function updateTextGeometry() {
+  if (textMesh) {
+    scene.remove(textMesh);
+    textMesh.geometry.dispose();
+  }
+
+  const newTextGeometry = new TextGeometry("veeno", {
+    font: storedFont,
+    size: params.size,
+    depth: params.depth,
+    curveSegments: params.curveSegments,
+    bevelEnabled: params.bevelEnabled,
+    bevelThickness: params.bevelThickness,
+    bevelSize: params.bevelSize,
+    bevelOffset: params.bevelOffset,
+    bevelSegments: params.bevelSegments,
+  });
+  textMesh = new THREE.Mesh(newTextGeometry, new THREE.MeshMatcapMaterial());
+  newTextGeometry.center();
+  newTextGeometry.deleteAttribute("normal");
+  newTextGeometry = mergeVertices(newTextGeometry, 1e-3);
+  newTextGeometry.computeVertexNormals();
+  textMesh.matcap = matcapTexture;
+  camera.lookAt(textMesh.position);
+  scene.add(textMesh);
+}
 
 /**
  * Object
