@@ -4,7 +4,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
-// import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 /**
  * Base
@@ -71,7 +71,7 @@ let storedFont;
 const fontLoader = new FontLoader();
 fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font) => {
   console.log(font, "IM FONT");
-  const textGeometry = new TextGeometry("veeno", {
+  let textGeometry = new TextGeometry("veeno", {
     font: font,
     size: 0.5,
     depth: 0.2,
@@ -90,11 +90,13 @@ fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font) => {
   //     -(textGeometry.boundingBox.max.z - 0.03) / 2
   //   );
   textGeometry.center();
+
+  textGeometry.deleteAttribute("normal");
+  textGeometry = mergeVertices(textGeometry, 1e-3);
+  textGeometry.computeVertexNormals();
   const material = new THREE.MeshMatcapMaterial();
   material.matcap = matcapTexture;
-  //   textGeometry.deleteAttribute("normal");
-  //   textGeometry = mergeVertices(textGeometry, 1e-3);
-  //   textGeometry.computeVertexNormals();
+
   textMesh = new THREE.Mesh(textGeometry, material);
   storedFont = font;
   scene.add(textMesh);
