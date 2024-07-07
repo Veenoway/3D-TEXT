@@ -46,7 +46,7 @@ const rgbeLoader = new RGBELoader();
  * Textures
  */
 const textureLoader = new THREE.TextureLoader();
-const toonTexture = textureLoader.load("/textures/matcaps/7.png");
+const toonTexture = textureLoader.load("/textures/matcaps/11.png");
 toonTexture.colorSpace = THREE.SRGBColorSpace;
 
 const matcapTexture = textureLoader.load("/textures/matcaps/3.png");
@@ -104,27 +104,45 @@ fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font) => {
   // TEXTURE
   material.metalness = 0.3;
   material.roughness = 0.2;
-  //   material.iridescence = 1;
-  //   material.iridescenceIOR = 1;
+  material.iridescence = 1;
+  material.iridescenceIOR = 1;
   //   material.transmission = 1;
-  //   material.ior = 1.15;
+  material.ior = 1.15;
+
+  const materialTextureFolder = gui.addFolder("Material Texture");
+  materialTextureFolder.add(material, "metalness").min(0).max(1).step(0.001);
+  materialTextureFolder.add(material, "roughness").min(0).max(1).step(0.001);
+  materialTextureFolder.add(material, "iridescence").min(0).max(1).step(0.001);
+  materialTextureFolder
+    .add(material, "iridescenceIOR")
+    .min(0)
+    .max(1)
+    .step(0.001);
+  materialTextureFolder.add(material, "transmission").min(0).max(1).step(0.001);
+  materialTextureFolder.add(material, "ior").min(0).max(1).step(0.001);
 
   //   const axesHelper = new THREE.AxesHelper();
   //   scene.add(axesHelper);
 });
 
 const donuts = [];
-const donutGeometry = new THREE.OctahedronGeometry(1, 1);
+const donutGeometry = new THREE.SphereGeometry(3, 35, 17);
 const donutMaterial = new THREE.MeshPhysicalMaterial();
-donutMaterial.metalness = 0.1;
+donutMaterial.metalness = 0.7;
 donutMaterial.roughness = 0;
 donutMaterial.iridescence = 1;
 donutMaterial.iridescenceIOR = 1;
-donutMaterial.transmission = 1;
+donutMaterial.transmission = 0.5;
 donutMaterial.ior = 1.15;
 donutMaterial.map = toonTexture;
+// donutMaterial.color = new THREE.Color(0xff0000);
+donutMaterial.clearcoat = 1;
+donutMaterial.clearcoatRoughness = 0.1;
+donutMaterial.reflectivity = 1;
+// donutMaterial.envMapIntensity = 1;
+donutMaterial.envMap = matcapTexture;
 
-for (let i = 0; i < 1000; i++) {
+for (let i = 0; i < 250; i++) {
   const donut = new THREE.Mesh(donutGeometry, donutMaterial);
   donut.position.x = (Math.random() - 0.5) * 10;
   donut.position.y = (Math.random() - 0.5) * 10;
@@ -132,7 +150,7 @@ for (let i = 0; i < 1000; i++) {
   donut.rotation.x = Math.random() * Math.PI;
   donut.rotation.y = Math.random() * Math.PI;
   donut.initialPosition = donut.position.y;
-  const random = 0.2;
+  const random = Math.random() / 5;
   donut.scale.set(random, random, random);
 
   scene.add(donut);
@@ -275,8 +293,8 @@ const tick = () => {
   camera.position.y = cursor.y * 3;
 
   donuts.forEach((donut) => {
-    donut.rotation.x += 0.0005;
-    donut.rotation.y += 0.0005;
+    donut.rotation.x += 0.001;
+    donut.rotation.y += 0.001;
 
     donut.position.y =
       donut.initialPosition +
