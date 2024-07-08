@@ -6,9 +6,6 @@ import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
-/**
- * Base
- */
 // Debug
 const gui = new GUI();
 
@@ -19,22 +16,14 @@ const canvas = document.querySelector("canvas.webgl");
 const scene = new THREE.Scene();
 
 // Lights
-const ambiantLight = new THREE.AmbientLight(0xffffff, 1.4);
+const ambiantLight = new THREE.AmbientLight(0xffffff, 2);
 scene.add(ambiantLight);
-gui.add(ambiantLight.position, "x").min(-10).max(10).step(0.01);
-gui.add(ambiantLight.position, "y").min(-10).max(10).step(0.01);
-gui.add(ambiantLight.position, "z").min(-10).max(10).step(0.01);
-gui.add(ambiantLight, "intensity").min(0).max(10).step(0.01);
 
-const light = new THREE.PointLight(0xffffff, 3.4);
-light.position.set(1, 2, 3);
+const light = new THREE.PointLight(0xffffff, 0.2);
+light.position.set(1, 1, 4);
 scene.add(light);
 
-gui.add(light.position, "x").min(-10).max(10).step(0.01);
-gui.add(light.position, "y").min(-10).max(10).step(0.01);
-gui.add(light.position, "z").min(-10).max(10).step(0.01);
-gui.add(light, "intensity").min(0).max(10).step(0.01);
-
+// Environment
 const rgbeLoader = new RGBELoader();
 // rgbeLoader.load("/textures/sun.hdr", (env) => {
 //   env.mapping = THREE.EquirectangularReflectionMapping;
@@ -42,18 +31,14 @@ const rgbeLoader = new RGBELoader();
 //   scene.environment = env;
 // });
 
-/**
- * Textures
- */
+// Textures
 const textureLoader = new THREE.TextureLoader();
 const toonTexture = textureLoader.load("/textures/matcaps/11.png");
 toonTexture.colorSpace = THREE.SRGBColorSpace;
-
 const matcapTexture = textureLoader.load("/textures/matcaps/3.png");
 matcapTexture.colorSpace = THREE.SRGBColorSpace;
 
-// FONTS
-
+// Params for handle textGeometry change
 const params = {
   text: "veeno",
   size: 0.5,
@@ -66,11 +51,11 @@ const params = {
   bevelSize: 0.02,
 };
 
+// Load font & Create Text Mesh
 let textMesh;
 let storedFont;
 const fontLoader = new FontLoader();
 fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font) => {
-  console.log(font, "IM FONT");
   let textGeometry = new TextGeometry("veeno", {
     font: font,
     size: 0.5,
@@ -83,14 +68,7 @@ fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font) => {
     bevelSize: 0.02,
   });
 
-  //   textGeometry.computeBoundingBox();
-  //   textGeometry.translate(
-  //     -(textGeometry.boundingBox.max.x - 0.02) / 2,
-  //     -(textGeometry.boundingBox.max.y - 0.02) / 2,
-  //     -(textGeometry.boundingBox.max.z - 0.03) / 2
-  //   );
   textGeometry.center();
-
   textGeometry.deleteAttribute("normal");
   textGeometry = mergeVertices(textGeometry, 1e-3);
   textGeometry.computeVertexNormals();
@@ -106,7 +84,6 @@ fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font) => {
   material.roughness = 0.2;
   material.iridescence = 1;
   material.iridescenceIOR = 1;
-  //   material.transmission = 1;
   material.ior = 1.15;
 
   const materialTextureFolder = gui.addFolder("Material Texture");
@@ -120,10 +97,9 @@ fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font) => {
     .step(0.001);
   materialTextureFolder.add(material, "transmission").min(0).max(1).step(0.001);
   materialTextureFolder.add(material, "ior").min(0).max(1).step(0.001);
-
-  //   const axesHelper = new THREE.AxesHelper();
-  //   scene.add(axesHelper);
 });
+
+// Create Donuts
 
 const donuts = [];
 const donutGeometry = new THREE.SphereGeometry(3, 35, 17);
@@ -135,12 +111,11 @@ donutMaterial.iridescenceIOR = 1;
 donutMaterial.transmission = 0.5;
 donutMaterial.ior = 1.15;
 donutMaterial.map = toonTexture;
-// donutMaterial.color = new THREE.Color(0xff0000);
 donutMaterial.clearcoat = 1;
 donutMaterial.clearcoatRoughness = 0.1;
 donutMaterial.reflectivity = 1;
-// donutMaterial.envMapIntensity = 1;
 donutMaterial.envMap = matcapTexture;
+donutMaterial.color = new THREE.Color("lightgreen");
 
 for (let i = 0; i < 250; i++) {
   const donut = new THREE.Mesh(donutGeometry, donutMaterial);
@@ -157,6 +132,7 @@ for (let i = 0; i < 250; i++) {
   donuts.push(donut);
 }
 
+// TextGeometry GUI Folder
 const textGeometryFolder = gui.addFolder("TextGeometry");
 textGeometryFolder.add(params, "text").onChange(updateTextGeometry);
 textGeometryFolder.add(params, "size", 0.1, 10).onChange(updateTextGeometry);
@@ -178,6 +154,7 @@ textGeometryFolder
   .add(params, "bevelSegments", 1, 20)
   .onChange(updateTextGeometry);
 
+// Handle GUI onChange
 function updateTextGeometry() {
   if (textMesh) {
     scene.remove(textMesh);
@@ -197,27 +174,12 @@ function updateTextGeometry() {
   });
   textMesh = new THREE.Mesh(newTextGeometry, new THREE.MeshMatcapMaterial());
   newTextGeometry.center();
-  //   newTextGeometry.deleteAttribute("normal");
-  //   newTextGeometry = mergeVertices(newTextGeometry, 1e-3);
-  //   newTextGeometry.computeVertexNormals();
   textMesh.matcap = matcapTexture;
   camera.lookAt(textMesh.position);
   scene.add(textMesh);
 }
 
-/**
- * Object
- */
-const cube = new THREE.Mesh(
-  new THREE.BoxGeometry(1, 1, 1),
-  new THREE.MeshBasicMaterial()
-);
-
-// scene.add(cube);
-
-/**
- * Sizes
- */
+// Canvas size
 const sizes = {
   width: window.innerWidth,
   height: window.innerHeight,
@@ -237,9 +199,6 @@ window.addEventListener("resize", () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
 
-/**
- * Camera
- */
 // Base camera
 const camera = new THREE.PerspectiveCamera(
   75,
@@ -247,15 +206,16 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   100
 );
-
-const cameraFolder = gui.addFolder("CAMERA");
-cameraFolder.add(camera.position, "x").min(-10).max(10).step(0.01);
-cameraFolder.add(camera.position, "y").min(-10).max(10).step(0.01);
-cameraFolder.add(camera.position, "z").min(-10).max(10).step(0.01);
 camera.position.x = 1;
 camera.position.y = 1;
 camera.position.z = 3;
 scene.add(camera);
+
+// Camera GUI Folder
+const cameraFolder = gui.addFolder("CAMERA");
+cameraFolder.add(camera.position, "x").min(-10).max(10).step(0.01);
+cameraFolder.add(camera.position, "y").min(-10).max(10).step(0.01);
+cameraFolder.add(camera.position, "z").min(-10).max(10).step(0.01);
 
 // Controls
 const controls = new OrbitControls(camera, canvas);
